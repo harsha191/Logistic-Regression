@@ -1,0 +1,51 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import string
+import json
+
+
+def feature_extraction(dataframe,feature,output):
+    dataframe["constant"]=1
+    feature = ["constant"]+feature
+    feature_final=dataframe[feature]
+    feature_matrix=feature_final.as_matrix() 
+    output = dataframe[output]
+    output_matrix=output.as_matrix()
+    return(feature_matrix,output_matrix)
+
+def probability(x,coefficeient):
+    score=np.dot(x,coefficeient)
+    prediction = 1/(1+np.exp(-score))
+    return prediction
+
+def feature_derivative(error,x):
+    derivative=np.dot(np.transpose(error),x)
+    return derivative
+
+def compute_log_likelihood(x,y,coefficeient):
+    indicator =(y==+1)
+    score=np.dot(x,coefficeient)
+    prediction = 1/(1+np.exp(-score))
+    ll=np.sum((np.transpose(np.array([indicator]))-1)*(score-np.log(prediction)))
+    return ll
+
+
+def logistic_regression(x,y,initial_coefficeient,step_size,max_iter):
+    indicator =(y==+1)
+    likelihood=np.zeros(max_iter)
+    coefficeient=np.array(initial_coefficeient)
+    coefficient_update=np.zeros((194,max_iter))
+    for itr in range(max_iter):
+        y_pred=probability(x,coefficeient)
+        error = np.transpose(np.array([indicator]))-y_pred
+        for j in range(len(coefficeient)):
+            derivative=feature_derivative(error,x[:,j])
+            coefficeient[j]=coefficeient[j]+(step_size*derivative)
+        coefficient_update[:,itr] = coefficeient[:,0]
+        while itr<max_iter:
+            lp=compute_log_likelihood(x,y,coefficeient)
+            likelihood[itr]=lp
+            itr=itr+1
+    return coefficeient,likelihood,coefficient_update
+plt.plot(likelihood,range(max_iter))
